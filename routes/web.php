@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\RegisterCtrl;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -13,6 +13,22 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+$router->get('/', function () use ($router) {
+    //return $router->app->version();
+    return redirect('https://google.com');
+});
+
+$router->group([
+    'prefix' => 'api/v1',
+    'middleware' => [
+        'cors',
+        'throttle',
+    ],
+    'namespace' => 'App\Http\Controllers',
+], function () use ($router) {
+
+        //Invoice
+        $router->get('/test', "RegisterCtrl@test");
+
+
 });
