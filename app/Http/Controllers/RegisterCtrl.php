@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Models\User;
+
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class RegisterCtrl extends Controller
@@ -28,5 +31,17 @@ class RegisterCtrl extends Controller
             return response()->json(["error" => $error], 400);
         }
 
+        try{
+            $user = new User();
+            $user->username = "test";
+            $user->email = "test@gmail.com";
+            $user->password = Hash::make($request->password);
+            $user->save();
+        }
+        catch(\Throwable $exp)
+        {
+            return response()->json(["error" => $exp->getMessage()], 400);
+        }
+        return response()->json(["message" => "success"], 200);
     }
 }
