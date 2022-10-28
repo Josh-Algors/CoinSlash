@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegisterCtrl;
+use App\Http\Controllers\LoginController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -28,7 +29,10 @@ $router->group([
 ], function () use ($router) {
 
         //Invoice
-        $router->get('/test', "RegisterCtrl@test");
+        $router->post('/signup', "RegisterCtrl@signup");
+        $router->post('/login', "LoginController@login");
+        $router->post('/forgot-password', "LoginController@forgotPassword");
+        $router->post('/logout', "LoginController@logout");
 
 
 });
