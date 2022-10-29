@@ -18,6 +18,7 @@ return [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),
         'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
     ],
 
     'postmark' => [
@@ -29,5 +30,24 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    
+    'google' => [
 
+        'client_id' => '806350512368-33omkp88dbkfngird24btbhi3ompvoi9.apps.googleusercontent.com',
+
+        'client_secret' => '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',
+
+        'redirect' => 'https://www.patientapi.gettheskydoctors.com/auth/google/callback',
+
+    ],
+
+    'facebook' => [
+
+        'client_id' => 'app id',
+
+        'client_secret' => 'add secret',
+
+        'redirect' => 'https://www.patientapi.gettheskydoctors.com/auth/facebook/callback',
+
+    ],
 ];

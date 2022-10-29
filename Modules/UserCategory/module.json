@@ -1,0 +1,13 @@
+{
+    "name": "UserCategory",
+    "alias": "usercategory",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\UserCategory\\Providers\\UserCategoryServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

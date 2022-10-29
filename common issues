@@ -1,0 +1,3 @@
+test.ERROR: cURL error 60: SSL certificate problem: unable to get local issuer certificate (see https://curl.haxx.se/libcurl/c/libcurl-err
+
+-   Modify vendor\guzzlehttp\guzzle\src\Client.php change 'verify' => true to false,

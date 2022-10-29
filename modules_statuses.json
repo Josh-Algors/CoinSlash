@@ -1,0 +1,6 @@
+{
+    "User": true,
+    "Auth": true,
+    "Location": true,
+    "UserCategory": true
+}
