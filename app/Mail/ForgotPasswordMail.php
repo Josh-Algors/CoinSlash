@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class NotificationMail extends Mailable
+class ForgotPasswordMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -32,7 +32,7 @@ class NotificationMail extends Mailable
      */
     public function build()
     {
-        return $this->subject("OTP Code - Verification")->view('emails.generic');
+        return $this->subject("Forgot Password? - Coinslash")->view('emails.generic');
         // return $this->view('view.name');
     }
 }

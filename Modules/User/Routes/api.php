@@ -20,12 +20,15 @@ use Spatie\Permission\Traits\HasRoles;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::prefix('user')->group(function () {
+Route::prefix('v1/')->group(function () {
     
     Route::post('register', [UserController::class, 'register']);
-    Route::post('email/verify', [UserController::class, 'verifyEmail']);
-    Route::post('phone/verify', [UserController::class, 'verifyEmail']);
+    Route::post('verify-account', [UserController::class, 'verifyEmail']);
+    // Route::post('phone/verify', [UserController::class, 'verifyEmail']);
     Route::post('login', [UserController::class, 'login']);
+    Route::post('forgot-password', [UserController::class, 'forgotPasswordd']);
+    Route::post('set-new-password', [UserController::class, 'setNewPassword']);
+    Route::post('resend-otp', [UserController::class, 'resendOtpp']);
     
     Route::post('otp/resend', [UserController::class, 'resendOTP']);
 

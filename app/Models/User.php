@@ -23,20 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'category_id',
-        'phone_email_verified',
-        'phone',
-        'status',
-        'gender',
-        'profile_image',
-        'marital_status',
-        'dob',
-        'weight',
-        'height',
-        'age',
-        'google_id',
-        'facebook_id',
-        'country_id'
+        'email_verfied_at',
     ];
 
     /**
@@ -58,19 +45,8 @@ class User extends Authenticatable
      *
      * @var array<string, string>
      */
-    protected $casts = [
-        'phone_email_verified_at' => 'datetime',
-    ];
 
     protected $appends = [
         'cat'
     ];
-
-    public function cat(){
-        return $this->belongsTo(UserCategory::class, 'category_id', 'id');
-    }
-
-    public function getCatAttribute(){
-       return $this->cat()->first() ? $this->cat()->first()->name : null;
-    }
 }

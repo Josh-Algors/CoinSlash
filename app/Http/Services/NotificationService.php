@@ -26,11 +26,11 @@ class NotificationService
         $user = User::whereEmail($recipient_email)->first();
         
         $details = [
-            'title' => "The Sky Doctor Registration OTP",
+            'title' => "Verify Your Account",
             'body' =>$body
         ];
         try{
-            Mail::to($user->email)->send(new NotificationMail($details));
+            Mail::to($user->email)->send(new NotificationMail($details, ""));
             // self::send($user, 'Registration Code', $htmlbody);
         }catch(\Exception $e){
             Log::error($e);

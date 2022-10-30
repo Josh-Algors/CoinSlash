@@ -26,21 +26,11 @@ class UserController extends Controller
     //first registration stage
     public function register(Request $request)
     {
+       dd("user");
         $validator = Validator::make($request->all(), [
-            'email' => 'required_without:phone|email',
-            'phone' => 'required_without:email|string',
-            'name' => 'required|string',
-            'category_id'=>'required|integer',
-            'country_id'=>'required|integer',
-            'password' => [
-                'required',
-                'string',
-                Password::min(8)
-                    ->mixedCase()
-                    ->numbers()
-                    ->symbols()
-                    ->uncompromised()
-            ]
+            'username' => 'required|unique:users,name',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -51,60 +41,54 @@ class UserController extends Controller
         $email = isset($input['email']) ? $input['email'] : false;
         $phone = isset($input['phone']) ? $input['phone'] : false;
         $name = $input['name'];
-        $category_id = $input['category_id'];
-        $country_id = $input['country_id'];
-        $password = $input['password'];
-        //check if user category exist
-        if(empty(UserCategory::whereId($category_id)->first())){
-            return response()->json(['status' => false, 'message' => 'user category does not exist', 'data' => $input], Response::HTTP_INTERNAL_SERVER_ERROR);
+
+        $user = User::where('email', $email)->first();
+
+        if($user){
+            $error['status'] = false;
+            $error['message'] = 'Email already exists';
+            return response()->json(["error" => $error], 400);
         }
 
-        //check if country exist
-        if(empty(Country::whereId($country_id)->first())){
-            return response()->json(['status' => false, 'message' => 'country does not exist', 'data' => $input], Response::HTTP_INTERNAL_SERVER_ERROR);
+        $findUsername = User::where('name', $username)->first();
+
+        if($findUsername){
+            $error['status'] = false;
+            $error['message'] = 'Username already exists';
+            return response()->json(["error" => $error], 400);
         }
 
-        try {
-            $user = UserService::register($name, $email, $category_id, $password, $phone, $country_id);
-        } catch (\Exception $e) {
-            Log::error("Error occur while creating this account " . $request->input('email') . json_encode($e));
-            return response()->json(['status' => false, 'message' => 'Error occured while creating account', 'data' => $input], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        //dump user to patient db if user category is patient
+        $code = rand(1000, 9999);
         try{
-            $findUser = $user[1];
-            // dd($findUser);
-            if($findUser->category_id == 3){
-
-                if(checkPatient($findUser->id)){
-                    $error['status'] = false;
-                    $error['message'] = 'User already exist';
-
-                    return response()->json($error, 400);
-                }
-
-                Patient::create([
-                    'user_id'=>$findUser->id,
-                    'name'=>$findUser->name,
-                    'email'=>$findUser->email,
-                    'phone'=>$findUser->phone,
-                    'country'=>$findUser->country_id,
-                    'is_verified' => 0,
-                ]);
-            }
+            User::create([
+                'name' => $name,
+                'email' => $email,
+                'password' => Hash::make($input['password']),
+            ]);
         }
-        catch (\Exception $e){
-            $error['status'] = 'error';
-            $error['message'] = 'Error occured while creating account';
-            return response()->json($error, Response::HTTP_INTERNAL_SERVER_ERROR);
+        catch(\Throwable $exp)
+        {
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = 'Something went wrong';
+            return response()->json(["error" => $error], 400);
+        }
+    
+        try{
+            Mail::to($email)->send(new RegisterMail($username, $code));
+        }
+        catch(\Throwable $exp){
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = 'Something went wrong';
+            return response()->json(["error" => $error], 400);
         }
 
-        //send otp to user
-        if(!$user[0]){
-            return response(['status' => false,'message' => $user[1], 'data' =>$user[1]], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-        return response(['status' => true,'message' => 'Account created successfully. An otp code has been sent to your email.', 'data' =>$user[1]], Response::HTTP_OK);
+        $success['status'] = "success";
+        $success['message'] = 'Kindly verify your account. We have sent you an email with the code.';
+        $success['email'] = $email;
+        return response()->json(["success" => $success], 200);
+       
     }
     
 
@@ -113,7 +97,6 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'otp' => 'required',
             'email' => 'required_without:phone|email',
-            'phone' => 'required_without:email|string',
         ]);
 
         if ($validator->fails()) {

@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Log;
 
 class OtpService{
     // handle all OTP related issues 
-    public static function generateOtp($user_id, $email, $phone){
-        $myotp = rand(1000, 9999);
+    public static function generateOtp($user_id, $email, $code){
+        // $myotp = rand(1000, 9999);
         $existingOtp = Otp::whereUserId($user_id)->whereUsed(false)->first();
         if($existingOtp){
             $existingOtp->used = true;
@@ -20,63 +20,83 @@ class OtpService{
         //create otp record
         $otp = new Otp();
         $otp->user_id = $user_id;
-        $otp->otp = Hash::make($myotp);
+        $otp->otp = Hash::make($code);
         $otp->used = false;
         $otp->expired_at = Carbon::now()->addMinutes(10)->timestamp;
         try{
             $otp->save();
-            $text = "Your One-Time-Password is: ". $myotp;
+            $text = "Kindly use this code - ". $code . " to verify your account.";
         }catch(\Exception $e){
             Log::error('error generating OTP.'. $e);
             return [false, 'error generating OTP.'];
         }
 
-        //send otp to email
-        if(!empty($email)){
-            $send_otp = NotificationService::Email($email, $text);
-        }else{
-            $send_otp = NotificationService::Sms($phone, $text);
-        }
+        
+        $send_otp = NotificationService::Email($email, $text);
+       
                 
         if(!$send_otp){
             Log::error("Error occur while sending OTP to user");
             return [false, 'error generating OTP.'];
         }
-        return [true, $myotp];
+        return [true, $code];
     }
 
-    public static function verifyOtp($email, $otp, $phone){
+    public static function verifyOtp($email, $otp){
+
         if(empty($email)){
-            $user = User::where('phone', $phone)->first();
-        }else{
+
+            $user = User::where('name', $email)->first();
+
+        }
+        else{
+
             $user = User::where('email', $email)->first();
+
         }
 
 
         if(empty($user)){
-            return [false, 'user not found'];
+            $error['status'] = "error";
+            $error['message'] = "User not found";
+            return response()->json(["error" => $error], 400);
         }
-        // if($user->phone_email_verified == true){
-        //     return [false, 'user email has earlier been verified'];
-        // }
+
         $myotp = Otp::whereUserId($user->id)->whereUsed(false)->first();
+
+        $code = rand(1000, 9999);
+
         if(!$myotp){
-            self::generateOtp($user->id, $user->email, $user->phone);
-            return [false, 'no OTP found for user. New OTP has been sent to your email'];
+
+            self::generateOtp($user->id, $user->email, $code);
+
+            $success['status'] = "success";
+            $success['message'] = "No OTP found. New OTP sent to your email";
+            return response()->json(["success" => $success], 200);
+
         }
+
         // check if otp has expired
         if((Carbon::now()->timestamp) > ($myotp->expired_at)){
             //update otp to used
             $myotp->used = true;
             $myotp->update();
+
             if(empty($email)){
-                $user = User::where('phone', $phone)->first();
+
+                $user = User::where('name', $email)->first();
+
             }else{
+
                 $user = User::where('email', $email)->first();
+
             }
 
-            self::generateOtp($user->id, $user->email, $user->phone);
-            return [false, 'Expired OTP. New OTP has been sent to your phone or email'];
+            self::generateOtp($user->id, $user->email, $code);
+
+            $success['status'] = "success";
+            $success['message'] = "OTP expired. New OTP sent to your email";
+            return response()->json(["success" => $success], 200);
         }
         if(!Hash::check($otp, $myotp->otp)){
             return [false, 'Invalid OTP'];

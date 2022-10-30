@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Passport\HasApiTokens;
 
-class Referral extends Authenticatable
+class Account extends Authenticatable
 {
     use HasFactory;
 
@@ -19,12 +19,15 @@ class Referral extends Authenticatable
      *
      * @var array<int, string>
      */
+
+    protected $table = 'accounts';
+
     protected $fillable = [
         'user_id',
-        'name',
-        'matric_no',
-        'phone',
-        'department',
+        'account_name',
+        'account_number',
+        'bank_name',
+        'bank_code',
     ];
 
 

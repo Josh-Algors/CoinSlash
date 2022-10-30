@@ -11,6 +11,10 @@ use App\Models\User;
 use App\Models\UserCategory;
 use App\Models\Patient;
 use App\Models\Referral;
+use App\Models\Otp;
+
+use App\Mail\NotificationMail;
+use App\Mail\ForgotPasswordMail;
 
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
@@ -22,6 +26,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -31,10 +38,7 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required_without:phone|email',
-            'phone' => 'required_without:email|string',
-            'name' => 'required|string',
-            'category_id'=>'required|integer',
-            'country_id'=>'required|integer',
+            'username' => 'required|string',
             'password' => [
                 'required',
                 'string',
@@ -53,78 +57,85 @@ class UserController extends Controller
         $input = $request->all();
         $email = isset($input['email']) ? $input['email'] : false;
         $phone = isset($input['phone']) ? $input['phone'] : false;
-        $name = $input['name'];
-        $category_id = $input['category_id'];
-        $country_id = $input['country_id'];
+        $username = $input['username'];
         $password = $input['password'];
         //check if user category exist
-        if(empty(UserCategory::whereId($category_id)->first())){
-            return response()->json(['status' => false, 'message' => 'user category does not exist', 'data' => $input], Response::HTTP_INTERNAL_SERVER_ERROR);
+       
+        $user = User::where('email', $email)->first();
+
+        if($user){
+            $error['status'] = false;
+            $error['message'] = 'Email already exists';
+            return response()->json(["error" => $error], 400);
         }
 
-        //check if country exist
-        if(empty(Country::whereId($country_id)->first())){
-            return response()->json(['status' => false, 'message' => 'country does not exist', 'data' => $input], Response::HTTP_INTERNAL_SERVER_ERROR);
+        $findUsername = User::where('name', $username)->first();
+
+        if($findUsername){
+            $error['status'] = false;
+            $error['message'] = 'Username already exists';
+            return response()->json(["error" => $error], 400);
         }
 
-        try {
-            $user = UserService::register($name, $email, $category_id, $password, $phone, $country_id);
-        } catch (\Exception $e) {
-            Log::error("Error occur while creating this account " . $request->input('email') . json_encode($e));
-            return response()->json(['status' => false, 'message' => 'Error occured while creating account', 'data' => $input], Response::HTTP_INTERNAL_SERVER_ERROR);
+        $code = rand(1000, 9999);
+        try{
+            User::create([
+                'name' => $username,
+                'email' => $email,
+                'password' => Hash::make($input['password']),
+            ]);
+        }
+        catch(\Throwable $exp)
+        {
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
+        }
+    
+        try{
+
+            Mail::to($email)->send(new NotificationMail($username, $code));
+
+        }
+        catch(\Throwable $exp){
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
         }
 
-        // //dump user to patient db if user category is patient
-        // try{
-        //     $findUser = $user[1];
-        //     // dd($findUser);
-        //     if($findUser->category_id == 3){
-
-        //         if(checkPatient($findUser->id)){
-        //             $error['status'] = false;
-        //             $error['message'] = 'User already exist';
-
-        //             return response()->json($error, 400);
-        //         }
-
-        //         Patient::create([
-        //             'user_id'=>$findUser->id,
-        //             'name'=>$findUser->name,
-        //             'email'=>$findUser->email,
-        //             'phone'=>$findUser->phone,
-        //             'country'=>$findUser->country_id,
-        //             'referral_code'=> str_rand(6),
-        //             'is_verified' => 0,
-        //         ]);
-
-        //         if($request->referral_code){
-        //             Referral::create([
-        //                 'referral_code'=>$request->referral_code,
-        //                 'referred_email'=>$request->email,
-        //             ]);
-        //         }
-        //     }
-        // }
-        // catch (\Exception $e){
-        //     $error['status'] = 'error';
-        //     $error['message'] = 'Error occured while creating account';
-        //     return response()->json($error, Response::HTTP_INTERNAL_SERVER_ERROR);
-        // }
-
-        //send otp to user
-        if(!$user[0]){
-            return response(['status' => false,'message' => $user[1], 'data' =>$user[1]], Response::HTTP_INTERNAL_SERVER_ERROR);
+        $user = User::where('email', $email)->first();
+        try{
+            Otp::create([
+                'user_id' => $user->id,
+                'otp' => $code,
+                'used' => 0,
+                'expired_at' => Carbon::now()->addMinutes(60)->timestamp,
+            ]);
         }
-        return response(['status' => true,'message' => 'Account created successfully. An otp code has been sent to your email.', 'data' =>$user[1]], Response::HTTP_OK);
+        catch(\Throwable $exp)
+        {
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
+        }
+
+        $success['status'] = "success";
+        $success['message'] = 'Kindly verify your account. We have sent you an email with the code.';
+        $success['email'] = $email;
+        return response()->json(["success" => $success], 200);
+        
     }
     
 
     public static function verifyEmail(Request $request){
+        
         // return User::find(1)->createToken('myapp')->accessToken;
         $validator = Validator::make($request->all(), [
             'otp' => 'required',
-            'email' => 'required_without:phone|email',
-            'phone' => 'required_without:email|string',
+            'email' => 'required|email',
         ]);
 
         if ($validator->fails()) {
@@ -133,74 +144,266 @@ class UserController extends Controller
         
         $input = $request->all();
         $email = isset($input['email']) ? $input['email'] : false;
-        $phone = isset($input['phone']) ? $input['phone'] : false;
         $otp = trim($input['otp']);
 
-        $verify = OtpService::verifyOtp($email, $otp, $phone);
 
-        if(!$verify[0]){
-            return response(['status' => false, 'message' => $verify[1] , 'data'=>false], 422);
+        $findUsermail = User::where('email', $email)->first();
+        $findUsername = User::where('name', $email)->first();
+
+        if(!$findUsermail && !$findUsername){
+            $error['status'] = false;
+            $error['message'] = 'Account does not exist';
+            return response()->json(["error" => $error], 400);
         }
+
+        if($findUsermail){
+            $user = $findUsermail;
+        }
+        else{
+            $user = $findUsername;
+        }
+
+        // $verify = OtpService::verifyOtp($email, $otp);
+        $findOtp = Otp::where('user_id', $user->id)->where('used', 0)->orderBy('id', 'desc')->first();
+
+        if(!$findOtp){
+            $error['status'] = false;
+            $error['message'] = 'Invalid OTP';
+            return response()->json(["error" => $error], 400);
+        }
+
+        if($findOtp->otp != $otp){
+            $error['status'] = false;
+            $error['message'] = 'Invalid OTP';
+            return response()->json(["error" => $error], 400);
+        }
+
+        $findOtp->used = 1;
+        $findOtp->save();
 
         //update user
         try{
-            $user = User::where('email', $email)->first();
-            $user->phone_email_verified = true;
-            $user->phone_email_verified_at = now();
-            $user->update();
 
-            //asign role
-            $role = UserService::assignRole($user);
-            if(!$role[0]){
-                return response(['status' => false, 'message' => $role[1] , 'data'=>false], 422);
-            }
-        }catch(\Exception $e){
-            Log::error($e);
-            return response(['status' => false, 'message' => 'error encountered while updating user record.' , 'data'=>false], 422);
+            $user->email_verfied_at = now();
+            $user->save();
+
+        }catch(\Throwable $exp){
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
         }
 
-        //update patient record
-        // try{
-        //     $checkMailPatient = Patient::where('email', $email)->first();
-        //     $checkPhonePatient = Patient::where('phone', $phone)->first();
-        //     if($checkMailPatient){
-        //         $valid = $checkMailPatient;
-        //         $checkMailPatient->is_verified = 1;
-        //         $checkMailPatient->update();
-        //     }
-        //     if($checkPhonePatient){
-        //         $valid = $checkPhonePatient;
-        //         $checkPhonePatient->is_verified = 1;
-        //         $checkPhonePatient->update();
-        //     }
-        // }
-        // catch(\Exception $e){
-        //     $error['status'] = 'error';
-        //     $error['message'] = $e->getMessage();
-        //     return response()->json($error, Response::HTTP_INTERNAL_SERVER_ERROR);
-        // }
-        NotificationService::Email($user->email, 'Your email has been successfully verified. You can now proceed to onboarding stage');
+        // NotificationService::Email($user->email, 'Your email has been successfully verified. You can now proceed to onboarding stage');
        
-        // dd($user);
-        // generate token for user 
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
         
-        $category = strtolower($user->cat);
-        
-        $redirect = self::redirect($category);
-
-        $data = [
-            'redirect_url' =>  $redirect,
-            'access_token' => $tokenResult,
-            'onboarded' => $user->onboarded,
-        ];
-        
-        return response(['status' => true, 'message' => $verify[1] , 'data'=>$data], 200);
+        $success['status'] = "success";
+        $success['message'] = 'Email successfully verified';
+        $success['access_token'] = $tokenResult;
+        return response()->json(["success" => $success], 200);
     }
     
+    public function resendOtpp(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $error['status'] = "error";
+            $error['message'] = $validator->errors();
+            return response()->json(["error" => $error], 400);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        $users = User::where('name', $request->email)->first();
+
+        if(!$user && !$users){
+            $error['status'] = "error";
+            $error['message'] = 'Account does not exist';
+            return response()->json(["error" => $error], 400);
+        }
+
+        if($user){
+            $user = $user;
+        }
+        else{
+            $user = $users;
+        }
+
+        if($user->email_verfied_at){
+            $error['status'] = "error";
+            $error['message'] = 'Account already verified';
+            return response()->json(["error" => $error], 400);
+        }
+
+        $code = rand(1000, 9999);
+
+        try{
+            Otp::create([
+                'user_id' => $user->id,
+                'otp' => $code,
+                'used' => 0,
+                'expired_at' => Carbon::now()->addMinutes(60)->timestamp,
+            ]);
+        }
+        catch(\Throwable $exp)
+        {
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
+        }
+
+        try{
+
+            Mail::to($user->email)->send(new NotificationMail($user->name, $code));
+
+        }
+        catch(\Throwable $exp){
+            Log::error($exp->getMessage());
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
+        }
+
+        $success['status'] = "success";
+        $success['message'] = 'Kindly verify your account. We have sent you an email with the code.';
+        $success['email'] = $user->email;
+        return response()->json(["success" => $success], 200);
+    }
+
+    public function forgotPasswordd(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $error['status'] = "error";
+            $error['message'] = $validator->errors();
+            return response()->json(["error" => $error], 400);
+        }
+
+        $usermail = User::where('email', $request->email)->first();
+        $username = User::where('name', $request->email)->first();
+
+        if(!$usermail && !$username){
+            $error['status'] = "error";
+            $error['message'] = 'Account does not exist';
+            return response()->json(["error" => $error], 400);
+        }
+
+        if($usermail){
+            $user = $usermail;
+        }
+        else{
+            $user = $username;
+        }
+
+        if(!$user){
+            $error['status'] = "error";
+            $error['message'] = 'Account does not exist';
+            return response()->json(["error" => $error], 400);
+        }
+
+        $code = rand(1000, 9999);
+
+        Otp::create([
+            'user_id' => $user->id,
+            'otp' => $code,
+            'used' => 0,
+            'expired_at' => Carbon::now()->addMinutes(60)->timestamp,
+        ]);
+
+        try{
+            
+
+            Mail::to($request->email)->send(new ForgotPasswordMail($request->email, $code));
+
+        }
+        catch(\Throwable $exp){
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
+        }
+
+        $success['status'] = "success";
+        $success['message'] = 'Kindly verify your account. We have sent you an email with the code.';
+        $success['email'] = $request->email;
+        return response()->json(["success" => $success], 200);
+
+    }
+
+    public function setNewPassword(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+            'otp' => 'required',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $error['status'] = "error";
+            $error['message'] = $validator->errors();
+            return response()->json(["error" => $error], 400);
+        }
+
+        $findUsermail = User::where('email', $request->email)->first();
+        $findUsername = User::where('name', $request->email)->first();
+
+        if(!$findUsermail && !$findUsername){
+            $error['status'] = false;
+            $error['message'] = 'Account does not exist';
+            return response()->json(["error" => $error], 400);
+        }
+
+        if($findUsermail){
+            $user = $findUsermail;
+        }
+        else{
+            $user = $findUsername;
+        }
+
+        $findOtp = Otp::where('user_id', $user->id)->where('used', 0)->orderBy('id', 'desc')->first();
+
+        if(!$findOtp){
+            $error['status'] = false;
+            $error['message'] = 'Invalid OTP';
+            return response()->json(["error" => $error], 400);
+        }
+
+        if($findOtp->otp != $request->otp){
+            $error['status'] = false;
+            $error['message'] = 'Invalid OTP';
+            return response()->json(["error" => $error], 400);
+        }
+
+        $findOtp->used = 1;
+        $findOtp->save();
+
+        //update user
+        try{
+
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+        }catch(\Throwable $exp){
+            $error['status'] = false;
+            $error['message'] = $exp->getMessage();
+            return response()->json(["error" => $error], 400);
+        }
+
+        $success['status'] = "success";
+        $success['message'] = 'Password successfully changed';
+        return response()->json(["success" => $success], 200);
+
+    }
+
     public function login(Request $request){
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'email' => 'required',
             'password' => 'required',
         ]);
 
@@ -208,69 +411,39 @@ class UserController extends Controller
             return response(['status' => false, 'message' => 'Validation errors. ' .  $validator->errors(), 'data'=>false], 422);
         }
         
-        $input = $request->all();
-        $email = $input['email'];
-        $password = trim($input['password']);
+        $email = $request->email;
 
-        $user = User::where('email', $email)->first();
-        if(empty($user)){
-            return response(['status' => false, 'message' => 'user not found', 'data'=>false], 422);
+        $userMail = User::where('email', $email)->first();
+        $userName = User::where('name', $email)->first();
+
+        if(!$userMail && !$userName){
+            $error['status'] = false;
+            $error['message'] = 'Account does not exist';
+            return response()->json(["error" => $error], 400);
         }
 
-        if(!(Hash::check($password, $user->password))){
-            return response(['status' => false, 'message' => 'incorrect password', 'data'=>false], 422);
+        if($userMail){
+            $user = $userMail;
+        }
+        else{
+            $user = $userName;
+        }
+
+        if(!(Hash::check($request->password, $user->password))){
+            $error['status'] = false;
+            $error['message'] = 'Invalid password';
+            return response()->json(["error" => $error], 400);
         }
 
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
-        $patientRecord = Patient::where('user_id', $user->id)->first();
 
-        $category = strtolower($user->cat);
-        
-        $redirect = self::redirect($category);
+        $success['status'] = "success";
+        $success['message'] = 'Login successful';
+        $success['access_token'] = $tokenResult;
 
-        $data = [
-            'redirect_url' =>  $redirect,
-            'access_token' => $tokenResult,
-            'onboarded' => $user->onboarded
-        ];
-        
-
-        return response(['status' => true, 'message' => 'login successful' , 'data'=>$data], 200);
+        return response()->json(["success" => $success], 200);
     }
 
-    public function addUserCategory(Request $request){
-        $validator = Validator::make($request->all(), [
-            'category_id' => 'required|integer',
-        ]);
-
-        if ($validator->fails()) {
-            return response(['status' => false, 'message' => 'Validation errors. ' .  $validator->errors(), 'data'=>false], 422);
-        }
-        
-        $user = Auth::user();
-        $input = $request->all();
-        $category_id = $input['category_id'];
-        //check if user category exist
-        if(empty(UserCategory::whereId($category_id)->first())){
-            return response()->json(['status' => false, 'message' => 'user category does not exist', 'data' => $input], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        try{
-            $user->category_id = $category_id;
-            $user->update();
-        }catch(\Exception $e){
-            Log::error($e);
-            return response(['status' => false, 'message' => 'user category not successful added' , 'data'=>['redirect_url'=>'']], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-        //asign role
-        $role = UserService::assignRole($user);
-        if(!$role[0]){
-            return response(['status' => false, 'message' => $role[1] , 'data'=>false], 422);
-        }
-        $redirect = self::redirect($user->cat);
-        return response(['status' => true, 'message' => 'user category successful added' , 'data'=>['redirect_url'=>$redirect]], 200);
-
-    }
 
     public function userProfile(Request $request)
     {

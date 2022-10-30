@@ -2,13 +2,17 @@
 <html>
 
 <head>
-    <title>{{ $details['title'] }}</title>
+
 </head>
 
 <body>
-    <h1>{{ $details['title'] }}</h1>
-    <p>{{ $details['body'] }}</p>
+
+    <h4>Hello {{ ucfirst($username) }}</h4>
+
+    <p>Kindly use the code - {{ $code }} to verify your account.</p>
+
     <p>Thank you</p>
+    
 </body>
 
 </html>
