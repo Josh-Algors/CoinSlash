@@ -31,6 +31,19 @@ Route::controller(DashboardController::class)
         Route::post('/set-account', 'setAccount');
         Route::get('/logout', 'logout');
         Route::get('/personal-account', 'getPersonalAcc');
+        Route::post('/testt', 'testp');
+
+
+        //payments group
+        Route::group(['prefix' => 'payments'], function(){
+            Route::get('/create-sub-account', 'createPaystackAccount');
+        });
+
+        //updateProfile
+        Route::group(['prefix' => 'settings'], function(){
+            Route::patch('/update-profile', 'updateProfile');
+        });
+
 
 });
 

@@ -159,7 +159,6 @@ class DashboardController extends Controller
             'account_number' => 'required',
             'bank_code' => 'required',
             'account_name' => 'required',
-            'bank_name' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -170,6 +169,15 @@ class DashboardController extends Controller
 
         $findAccount = Account::where('user_id', $user->id)->first();
 
+        $getBank = \DB::table("bank_codes")->where("code", $request->bank_code)->first();
+
+        if(!$getBank)
+        {
+            $error['status'] = false;
+            $error['message'] = "Invalid bank code";
+            return response()->json($error, 400);
+        }
+        
         if($findAccount){
             $findAccount->delete();
         }
@@ -181,7 +189,7 @@ class DashboardController extends Controller
             $account->account_number = $request->account_number;
             $account->bank_code = $request->bank_code;
             $account->account_name = $request->account_name;
-            $account->bank_name = $request->bank_name;
+            $account->bank_name = $getBank->name;
             $account->save();
 
         }
@@ -248,6 +256,132 @@ class DashboardController extends Controller
 
         $success['status'] = "success";
         $success['message'] = "User logged out successfully";
+        return response()->json(["success" => $success], 200);
+    }
+
+    public function createPaystackAccount(Request $request){
+
+        $user = Auth::user();
+
+        $findUser = User::find($user->id);
+
+        // dd($findUser);
+
+        if(!$findUser){
+            $error['status'] = false;
+            $error['message'] = "User not found!";
+            return response()->json($error, 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'account_number' => 'required',
+            'bank_code' => 'required',
+            'account_name' => 'required',
+            'bank_name' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $error['status'] = false;
+            $error['message'] = $validator->errors();
+            return response()->json($error, 400);
+        }
+
+        $resp = createSubAccount($request->account_number, $request->bank_code);
+
+        if(!$resp['status']){
+            $error['status'] = "error";
+            $error['message'] = "Unable to create account";
+            return response()->json(["error" => $error], 400);
+        }
+        
+        $success['status'] = "success";
+        $success['message'] = "Sub-account created successfully";
+        $success['data'] = $resp['data'];
+        return response()->json(["success" => $success], 200);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $findUser = User::find($user->id);
+
+        // dd($findUser);
+
+        if(!$findUser){
+            $error['status'] = false;
+            $error['message'] = "User not found!";
+            return response()->json($error, 404);
+        }
+
+        try{   
+            $findUser->name = $request->name ? $request->name : $findUser->name;
+            $findUser->email = $request->email ? $request->email : $findUser->email;
+            $findUser->password = Hash::make($request->password) ? Hash::make($request->password) : $findUser->password;
+            $findUser->save();
+        } 
+        catch(\Throwable $exp){
+            $error['status'] = "error";
+            $error['message'] = "Unable to update profile! Either email or username has been used.";
+            return response()->json(["error" => $error], 400);
+        }
+
+        $success['status'] = "success";
+        $success['message'] = "Profile updated successfully";
+        $success['data'] = $findUser;
+        
+        return response()->json(["success" => $success], 200);
+    }
+
+    public function referAndEarn(Request $request)
+    {
+        $user = Auth::user();
+
+        $findUser = User::find($user->id);
+
+        // dd($findUser);
+
+        if(!$findUser){
+            $error['status'] = false;
+            $error['message'] = "User not found!";
+            return response()->json($error, 404);
+        }
+
+        $getAccount = Account::where('user_id', $user->id)->first();
+
+        if(!$getAccount){
+            $error['status'] = "error";
+            $error['message'] = "No Account Set!";
+            return response()->json(["error" => $error], 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            $error['status'] = false;
+            $error['message'] = $validator->errors();
+            return response()->json($error, 400);
+        }
+
+        $findReferee = User::where('email', $request->email)->first();
+
+        if($findReferee){
+            $error['status'] = "error";
+            $error['message'] = "User already exists!";
+            return response()->json(["error" => $error], 400);
+        }
+
+        $referral = new Referral();
+        $referral->user_id = $user->id;
+        $referral->email = $request->email;
+        $referral->save();
+
+        $success['status'] = "success";
+        $success['message'] = "Referral sent successfully";
+        $success['data'] = $referral;
+        
         return response()->json(["success" => $success], 200);
     }
 }

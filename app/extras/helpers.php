@@ -36,10 +36,6 @@ function str_rand($length, $characters = '0123456789abcdefghijklmnopqrstuvwxyzAB
     return $string;
 }
 
-function checkRes(){
-    return "ghjkl";
-}
-
  function bankVerify(string $accountnumber, string $bankcode)
 {
     // dd($accountnumber, $bankcode);
@@ -70,4 +66,74 @@ function checkRes(){
         //   print_r($tranx['detail']);
 
           return $tranx;
+}
+
+function createSubAccount(string $accountnumber, string $bankcode)
+{
+    // dd($accountnumber, $bankcode);
+    $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.paystack.co/subaccount",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => json_encode([
+                "business_name" => "CoinSlash", 
+                "bank_code" => $bankcode, 
+                "account_number" => $accountnumber,
+                "percentage_charge" => 80, 
+            ]),
+            CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
+            "content-type: application/json"
+            ]
+          ));
+
+          $response = curl_exec($curl);
+          $err = curl_error($curl);
+
+          if($err){
+            // there was an error contacting the myIdentitypass API
+            die('Curl returned error: ' . $err);
+          }
+
+          $tranx = json_decode($response, true);
+
+        //   print_r($tranx['detail']);
+
+          return $tranx;
+}
+
+function initializePayment()
+{
+        // dd($accountnumber, $bankcode);
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.paystack.co/transaction/initialize",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => json_encode([
+                "business_name" => "CoinSlash", 
+                "bank_code" => $bankcode, 
+                "account_number" => $accountnumber,
+                "percentage_charge" => 80, 
+            ]),
+            CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
+            "content-type: application/json"
+            ]
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        if($err){
+            // there was an error contacting the myIdentitypass API
+            die('Curl returned error: ' . $err);
+        }
+
+        $tranx = json_decode($response, true);
+
+        //   print_r($tranx['detail']);
+
+        return $tranx;
 }

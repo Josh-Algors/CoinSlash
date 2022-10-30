@@ -46,7 +46,7 @@ class User extends Authenticatable
      * @var array<string, string>
      */
 
-    protected $appends = [
-        'cat'
-    ];
+    // protected $appends = [
+    //     'cat'
+    // ];
 }
