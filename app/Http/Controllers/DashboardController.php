@@ -265,7 +265,7 @@ class DashboardController extends Controller
         $success['status'] = "success";
         $success['message'] = "No Account Set!";
         $success['type'] = 0;
-        return response()->json(["success" => $success], 400);
+        return response()->json(["success" => $success], 200);
     }
 
     public function logout()
