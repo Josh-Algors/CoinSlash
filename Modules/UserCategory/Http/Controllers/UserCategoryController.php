@@ -5,10 +5,13 @@ namespace Modules\User\Http\Controllers;
 use App\Http\Services\NotificationService;
 use App\Http\Services\OtpService;
 use App\Http\Services\UserService;
+
 use App\Models\Country;
 use App\Models\User;
 use App\Models\UserCategory;
 use App\Models\Patient;
+use App\Models\Balance;
+
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

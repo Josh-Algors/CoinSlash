@@ -12,6 +12,7 @@ use App\Models\UserCategory;
 use App\Models\Patient;
 use App\Models\Referral;
 use App\Models\Otp;
+use App\Models\Balance;
 
 use App\Mail\NotificationMail;
 use App\Mail\ForgotPasswordMail;
@@ -187,7 +188,18 @@ class UserController extends Controller
         }
 
         // NotificationService::Email($user->email, 'Your email has been successfully verified. You can now proceed to onboarding stage');
-       
+        try{
+
+            Balance::create([
+                'user_id' => $user->id,
+                'balance' => 0,
+            ]);
+            
+        }
+        catch(\Throwable $exp){
+
+        }
+
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
         
         $success['status'] = "success";

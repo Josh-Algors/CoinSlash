@@ -12,6 +12,7 @@ use Exception;
 use App\Models\User;
 use App\Models\Referral;
 use App\Models\Account;
+use App\Models\Balance;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -37,12 +38,14 @@ class DashboardController extends Controller
             return response()->json($error, 404);
         }
 
+        $balance = Balance::where('user_id', $user->id)->first();
+
         //update patient record
         $data['id'] = $user->id;
         $data['username'] = $user->name;
         $data['email'] = $user->email;
         $data['email_verfied_at'] = $user->email_verfied_at;
-
+        $data['amount_earned'] = $balance->balance ?? "0";
 
 
         $success['status'] = "success";
@@ -503,6 +506,13 @@ class DashboardController extends Controller
             foreach($referrals as $referral){
                 $referral->status = 1;
                 $referral->save();
+            }
+
+            $balance = \DB::table("sub_accounts")->where("user_id", $user->id)->first();
+
+            if($balance){
+                $balance->balance = $balance->balance + (($verify['data']['amount']/10000) * 200);
+                $balance->save();
             }
 
             $success['status'] = "success";
