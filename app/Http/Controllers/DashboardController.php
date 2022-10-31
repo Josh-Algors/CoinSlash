@@ -410,7 +410,7 @@ class DashboardController extends Controller
         }
 
         $naira = 100;
-        $amount = 1000 * $request->number * $naira;
+        $amount = 10 * $request->number * $naira;
         $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
 
         if($transfer['status']){
