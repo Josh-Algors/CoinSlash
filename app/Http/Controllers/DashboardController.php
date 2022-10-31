@@ -514,6 +514,12 @@ class DashboardController extends Controller
                 $balance->balance = $balance->balance + (($verify['data']['amount']/10000) * 200);
                 $balance->save();
             }
+            else{
+                $balance = Balance::create([
+                    "user_id" => $user->id,
+                    "balance" => (($verify['data']['amount']/10000) * 200)
+                ]);
+            }
 
             $success['status'] = "success";
             $success['message'] = "Payment verified successfully";
