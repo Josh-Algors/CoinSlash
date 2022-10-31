@@ -179,7 +179,9 @@ class DashboardController extends Controller
         }
         
         if($findAccount){
-            $findAccount->delete();
+            $error['status'] = "error";
+            $error['message'] = "Account has been set already!";
+            return response()->json(["error" => $error], 400);
         }
 
         try{
@@ -197,6 +199,33 @@ class DashboardController extends Controller
             $error['status'] = false;
             $error['message'] = $e->getMessage();
             return response()->json($error, 400);
+        }
+
+        try{
+
+            $resp = createSubAccount($request->account_number, $request->bank_code);
+
+        }
+        catch(\Throwable $exp){
+
+        }
+        
+        try{
+
+            \DB::table("sub_accounts")->insert([
+                "user_id" => $user->id,
+                "sub_account_code" => $resp["data"]["subaccount_code"],
+            ]);
+
+        }
+        catch(\Throwable $exp){
+            return response()->json($exp->getMessage(), 400);
+        }
+
+        if(!$resp['status']){
+            $error['status'] = "error";
+            $error['message'] = "Unable to create account";
+            return response()->json(["error" => $error], 400);
         }
 
         $success['status'] = "success";
@@ -227,14 +256,16 @@ class DashboardController extends Controller
         if($account){
             $success['status'] = "success";
             $success['message'] = "Account details fetched successfully";
+            $success['type'] = 1;
             $success['data'] = $account;
 
             return response()->json(["success" => $success], 200);
         }
 
-        $error['status'] = "error";
-        $error['message'] = "No Account Set!";
-        return response()->json(["error" => $error], 400);
+        $success['status'] = "success";
+        $success['message'] = "No Account Set!";
+        $success['type'] = 0;
+        return response()->json(["success" => $success], 400);
     }
 
     public function logout()
@@ -347,16 +378,10 @@ class DashboardController extends Controller
             return response()->json($error, 404);
         }
 
-        $getAccount = Account::where('user_id', $user->id)->first();
-
-        if(!$getAccount){
-            $error['status'] = "error";
-            $error['message'] = "No Account Set!";
-            return response()->json(["error" => $error], 400);
-        }
-
+        //value - object of array[name, email, phone, referral_code]
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            "number" => "required",
+            "value" => "required|array|min:1",
         ]);
 
         if ($validator->fails()) {
@@ -365,23 +390,51 @@ class DashboardController extends Controller
             return response()->json($error, 400);
         }
 
-        $findReferee = User::where('email', $request->email)->first();
+        $subAccount = \DB::table("sub_accounts")->where("user_id", $user->id)->first();
 
-        if($findReferee){
+        if(!$subAccount){
             $error['status'] = "error";
-            $error['message'] = "User already exists!";
+            $error['message'] = "Set up your account first!";
             return response()->json(["error" => $error], 400);
         }
 
-        $referral = new Referral();
-        $referral->user_id = $user->id;
-        $referral->email = $request->email;
-        $referral->save();
+        $naira = 100;
+        $amount = 1000 * $request->number * $naira;
+        $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
+
+        if($transfer['status']){
+            
+            \DB::table('transaction_logs')->insert([
+                'user_id' => $user->id,
+                'data' => json_encode($transfer['data']),
+            ]);
+
+            $success['status'] = "success";
+            $success['message'] = "Payment initialized successfully";
+            $success['data'] = $transfer['data'];
+            return response()->json(["success" => $success], 200);
+        }
+
+        $arr = array();
+        //value - [name, matric_no, phone, department, user_id]
+        foreach($request->value as $value){
+            $value['user_id'] = $user->id;
+            $value['name'] = $value['name'] ? $value['name'] : "";
+            $value['matric_no'] = $value['matric_no'] ? $value['matric_no'] : "";
+            $value['phone'] = $value['phone'] ? $value['phone'] : "";
+            $value['department'] = $value['department'] ? $value['department'] : "";
+            $value['status'] = 0;
+
+            $refer = Referral::create($value);
+            array_push($arr, $refer);
+
+        }
 
         $success['status'] = "success";
-        $success['message'] = "Referral sent successfully";
-        $success['data'] = $referral;
+        $success['message'] = "Referral details saved successfully";
+        $success['data'] = $arr;
         
         return response()->json(["success" => $success], 200);
+       
     }
 }

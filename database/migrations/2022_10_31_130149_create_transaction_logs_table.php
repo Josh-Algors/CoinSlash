@@ -13,10 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('sub_accounts', function (Blueprint $table) {
+        Schema::create('transaction_logs', function (Blueprint $table) {
             $table->id();
             $table->string('user_id');
-            $table->string('sub_account_code');
+            $table->text('data');
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sub_accounts');
+        Schema::dropIfExists('transaction_logs');
     }
 };

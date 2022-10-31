@@ -25,6 +25,7 @@ class Referral extends Authenticatable
         'matric_no',
         'phone',
         'department',
+        'status'
     ];
 
 

@@ -13,11 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('sub_accounts', function (Blueprint $table) {
-            $table->id();
-            $table->string('user_id');
-            $table->string('sub_account_code');
-            $table->timestamps();
+        Schema::table('referrals', function (Blueprint $table) {
+            //
+            $table->string('status');
         });
     }
 
@@ -28,6 +26,9 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sub_accounts');
+        Schema::table('referrals', function (Blueprint $table) {
+            //
+            $table->string('status');
+        });
     }
 };

@@ -44,6 +44,10 @@ Route::controller(DashboardController::class)
             Route::patch('/update-profile', 'updateProfile');
         });
 
+        Route::group(['prefix' => 'refer'], function(){
+            Route::post('/initialize', 'referAndEarn');
+        });
+
 
 });
 

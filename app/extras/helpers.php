@@ -103,7 +103,12 @@ function createSubAccount(string $accountnumber, string $bankcode)
           return $tranx;
 }
 
-function initializePayment()
+function transferToSubAccount()
+{
+
+}
+
+function initializePayment($email, $amount, $subaccount)
 {
         // dd($accountnumber, $bankcode);
         $curl = curl_init();
@@ -112,10 +117,9 @@ function initializePayment()
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => json_encode([
-                "business_name" => "CoinSlash", 
-                "bank_code" => $bankcode, 
-                "account_number" => $accountnumber,
-                "percentage_charge" => 80, 
+                "email" => $email, 
+                "amount" => $amount,
+                "subaccount" => $subaccount, 
             ]),
             CURLOPT_HTTPHEADER => [
             "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
