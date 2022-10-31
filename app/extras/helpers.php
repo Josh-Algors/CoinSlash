@@ -83,7 +83,7 @@ function createSubAccount(string $accountnumber, string $bankcode)
                 "percentage_charge" => 80, 
             ]),
             CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer sk_live_e3490d42f30765f4f76d39a7a653c773d5f3b257",
+            "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
             "content-type: application/json"
             ]
           ));
@@ -116,7 +116,7 @@ function verifyPayment($reference)
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer sk_live_e3490d42f30765f4f76d39a7a653c773d5f3b257",
+            "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
             "content-type: application/json"
             ]
           ));
@@ -135,7 +135,8 @@ function verifyPayment($reference)
 
           return $tranx;
 }
-
+//sk_test_261b476a34373366572bbd0a3bd2951f84689140
+//sk_live_e3490d42f30765f4f76d39a7a653c773d5f3b257
 function initializePayment($email, $amount, $subaccount)
 {
         // dd($accountnumber, $bankcode);
@@ -150,7 +151,7 @@ function initializePayment($email, $amount, $subaccount)
                 "subaccount" => $subaccount, 
             ]),
             CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer sk_live_e3490d42f30765f4f76d39a7a653c773d5f3b257",
+            "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
             "content-type: application/json"
             ]
         ));
