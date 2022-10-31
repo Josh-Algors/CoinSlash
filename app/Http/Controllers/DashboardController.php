@@ -265,6 +265,14 @@ class DashboardController extends Controller
         $success['status'] = "success";
         $success['message'] = "No Account Set!";
         $success['type'] = 0;
+        $success['data'] = [
+            "account_number" => "",
+            "bank_code" => "",
+            "account_name" => "",
+            "bank_name" => "",
+            "user_id" => "",
+            "id" => "",
+        ];
         return response()->json(["success" => $success], 200);
     }
 
