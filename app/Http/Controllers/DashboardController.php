@@ -508,7 +508,7 @@ class DashboardController extends Controller
                 $referral->save();
             }
 
-            $balance = \DB::table("sub_accounts")->where("user_id", $user->id)->first();
+            $balance = Balance::where("user_id", $user->id)->first();
 
             if($balance){
                 $balance->balance = $balance->balance + (($verify['data']['amount']/10000) * 200);
