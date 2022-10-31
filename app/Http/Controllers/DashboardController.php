@@ -484,6 +484,18 @@ class DashboardController extends Controller
 
         $verify = verifyPayment($data->reference);
 
+        try{
+
+            \DB::table('payment_logs')->insert([
+                'user_id' => $user->id,
+                'data' => json_encode($verify['data'])
+            ]);
+
+        }
+        catch(\Throwable $exp){
+
+        }
+
         if($verify['data']['status'] == "success"){
 
             $referrals = Referral::where("user_id", $user->id)->get();
