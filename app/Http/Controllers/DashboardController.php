@@ -517,7 +517,7 @@ class DashboardController extends Controller
             else{
                 $balance = Balance::create([
                     "user_id" => $user->id,
-                    "balance" => (($verify['data']['amount']/10000) * 200)
+                    "balance" => (($verify['data']['amount']/100000) * 200)
                 ]);
             }
 
