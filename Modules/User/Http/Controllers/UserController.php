@@ -191,10 +191,9 @@ class UserController extends Controller
         try{
 
             Balance::create([
-                'user_id' => $user->id,
-                'balance' => 0,
+                'user_id' => $user->id
             ]);
-            
+
         }
         catch(\Throwable $exp){
 
