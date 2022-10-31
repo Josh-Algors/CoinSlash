@@ -404,37 +404,95 @@ class DashboardController extends Controller
 
         if($transfer['status']){
             
+            $ref = str_rand(8);
             \DB::table('transaction_logs')->insert([
                 'user_id' => $user->id,
                 'data' => json_encode($transfer['data']),
+                'reference' => $ref
             ]);
+
+            $arr = array();
+
+            foreach($request->value as $value){
+                $value['user_id'] = $user->id;
+                $value['name'] = $value['name'] ? $value['name'] : "";
+                $value['matric_no'] = $value['matric_no'] ? $value['matric_no'] : "";
+                $value['phone'] = $value['phone'] ? $value['phone'] : "";
+                $value['department'] = $value['department'] ? $value['department'] : "";
+                $value['status'] = 0;
+
+                $refer = Referral::create($value);
+                array_push($arr, $refer);
+
+            }
 
             $success['status'] = "success";
             $success['message'] = "Payment initialized successfully";
-            $success['data'] = $transfer['data'];
+            $success['data'] = [
+                "transaction_id" => $ref,
+                "data" => $transfer['data']
+            ];
+
             return response()->json(["success" => $success], 200);
         }
 
-        $arr = array();
-        //value - [name, matric_no, phone, department, user_id]
-        foreach($request->value as $value){
-            $value['user_id'] = $user->id;
-            $value['name'] = $value['name'] ? $value['name'] : "";
-            $value['matric_no'] = $value['matric_no'] ? $value['matric_no'] : "";
-            $value['phone'] = $value['phone'] ? $value['phone'] : "";
-            $value['department'] = $value['department'] ? $value['department'] : "";
-            $value['status'] = 0;
+        $error['status'] = "error";
+        $error['message'] = "Unable to initialize payment";
+        return response()->json(["error" => $error], 400);   
+    }
 
-            $refer = Referral::create($value);
-            array_push($arr, $refer);
+    public function verifyPayment(Request $request){
+        $user = Auth::user();
 
+        $findUser = User::find($user->id);
+
+        // dd($findUser);
+
+        if(!$findUser){
+            $error['status'] = false;
+            $error['message'] = "User not found!";
+            return response()->json($error, 404);
         }
 
-        $success['status'] = "success";
-        $success['message'] = "Referral details saved successfully";
-        $success['data'] = $arr;
+        $validator = Validator::make($request->all(), [
+            "referenceId" => "required",
+        ]);
+
+        if ($validator->fails()) {
+            $error['status'] = false;
+            $error['message'] = $validator->errors();
+            return response()->json($error, 400);
+        }
         
-        return response()->json(["success" => $success], 200);
-       
+        $trans_logs = \DB::table('transaction_logs')->where("reference", $request->referenceId)->first();
+
+        if(!$trans_logs){
+            $error['status'] = "error";
+            $error['message'] = "Transaction not found!";
+            return response()->json(["error" => $error], 400);
+        }
+
+        $data = json_decode($trans_logs->data);
+
+        $verify = verifyPayment($data->reference);
+
+        if($verify['data']['status'] == "success"){
+
+            $referrals = Referral::where("user_id", $user->id)->get();
+
+            foreach($referrals as $referral){
+                $referral->status = 1;
+                $referral->save();
+            }
+
+            $success['status'] = "success";
+            $success['message'] = "Payment verified successfully";
+            $success['data'] = $verify['data'];
+            return response()->json(["success" => $success], 200);
+        }
+
+        $error['status'] = "error";
+        $error['message'] = "Unable to verify payment";
+        return response()->json(["error" => $error], 400);
     }
 }

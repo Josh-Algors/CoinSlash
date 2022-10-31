@@ -108,6 +108,34 @@ function transferToSubAccount()
 
 }
 
+function verifyPayment($reference)
+{
+    $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.paystack.co/transaction/verify/".$reference,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
+            "content-type: application/json"
+            ]
+          ));
+
+          $response = curl_exec($curl);
+          $err = curl_error($curl);
+
+          if($err){
+            // there was an error contacting the myIdentitypass API
+            die('Curl returned error: ' . $err);
+          }
+
+          $tranx = json_decode($response, true);
+
+        //   print_r($tranx['detail']);
+
+          return $tranx;
+}
+
 function initializePayment($email, $amount, $subaccount)
 {
         // dd($accountnumber, $bankcode);
