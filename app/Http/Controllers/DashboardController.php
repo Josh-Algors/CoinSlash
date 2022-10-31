@@ -410,7 +410,7 @@ class DashboardController extends Controller
         }
 
         $naira = 100;
-        $amount = 10 * $request->number * $naira;
+        $amount = 1000 * $request->number * $naira;
         $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
 
         if($transfer['status']){
@@ -511,7 +511,7 @@ class DashboardController extends Controller
             $balance = Balance::where("user_id", $user->id)->first();
 
             if($balance){
-                $balance->balance = $balance->balance + (($verify['data']['amount']/10000) * 200);
+                $balance->balance = $balance->balance + (($verify['data']['amount']/100000) * 200);
                 $balance->save();
             }
             else{
