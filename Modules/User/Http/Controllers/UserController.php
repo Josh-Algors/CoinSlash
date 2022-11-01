@@ -16,6 +16,7 @@ use App\Models\Balance;
 
 use App\Mail\NotificationMail;
 use App\Mail\ForgotPasswordMail;
+use App\Mail\Tracker;
 
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
@@ -115,6 +116,13 @@ class UserController extends Controller
             return response()->json(["error" => $error], 400);
         }
 
+        try{
+            $message = $user->email . ' just registered on the platform!';
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
+        }
+
         $success['status'] = "success";
         $success['message'] = 'Kindly verify your account. We have sent you an email with the code.';
         $success['email'] = $email;
@@ -199,6 +207,13 @@ class UserController extends Controller
 
         }
 
+        try{
+            $message = $user->email . ' just verified their account!';
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
+        }
+
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
         
         $success['status'] = "success";
@@ -271,6 +286,13 @@ class UserController extends Controller
             return response()->json(["error" => $error], 400);
         }
 
+        try{
+            $message = $user->email . ' just requested for a new OTP!';
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
+        }
+
         $success['status'] = "success";
         $success['message'] = 'Kindly verify your account. We have sent you an email with the code.';
         $success['email'] = $user->email;
@@ -322,7 +344,6 @@ class UserController extends Controller
 
         try{
             
-
             Mail::to($request->email)->send(new ForgotPasswordMail($request->email, $code));
 
         }
@@ -330,6 +351,13 @@ class UserController extends Controller
             $error['status'] = false;
             $error['message'] = $exp->getMessage();
             return response()->json(["error" => $error], 400);
+        }
+
+        try{
+            $message = $user->email . ' just requested for a new OTP! - Forgot Password';
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
         }
 
         $success['status'] = "success";
@@ -398,6 +426,13 @@ class UserController extends Controller
             return response()->json(["error" => $error], 400);
         }
 
+        try{
+            $message = $user->email . ' just changed his/her password!';
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
+        }
+
         $success['status'] = "success";
         $success['message'] = 'Password successfully changed';
         return response()->json(["success" => $success], 200);
@@ -436,6 +471,13 @@ class UserController extends Controller
             $error['status'] = false;
             $error['message'] = 'Invalid password';
             return response()->json(["error" => $error], 400);
+        }
+
+        try{
+            $message = $user->email . ' just logged in!';
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
         }
 
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;

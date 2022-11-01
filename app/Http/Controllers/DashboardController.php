@@ -14,10 +14,14 @@ use App\Models\Referral;
 use App\Models\Account;
 use App\Models\Balance;
 
+use App\Mail\Tracker;
+
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+
 use Modules\User\Http\Controllers\UserController;
 
 class DashboardController extends Controller
@@ -231,6 +235,14 @@ class DashboardController extends Controller
             return response()->json(["error" => $error], 400);
         }
 
+        try{
+            $message = $user->email . " has set up an account with account number " . $request->account_number . " and bank code " . $request->bank_code . " and account name " . $request->account_name;
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
+            return response()->json($exp->getMessage(), 400);
+        }
+
         $success['status'] = "success";
         $success['message'] = "Account details saved successfully";
         $success['data'] = $account;
@@ -293,9 +305,17 @@ class DashboardController extends Controller
             return response()->json($error, 404);
         }
 
+        try{
+            $message = $user->email . " has logged out";
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
+        }
+
         $user = $user->token();
         $user->revoke();
 
+        
         $success['status'] = "success";
         $success['message'] = "User logged out successfully";
         return response()->json(["success" => $success], 200);
@@ -335,6 +355,13 @@ class DashboardController extends Controller
             $error['message'] = "Unable to create account";
             return response()->json(["error" => $error], 400);
         }
+
+        try{
+            $message = $user->email . " has created a paystack account";
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
+        }
         
         $success['status'] = "success";
         $success['message'] = "Sub-account created successfully";
@@ -366,6 +393,13 @@ class DashboardController extends Controller
             $error['status'] = "error";
             $error['message'] = "Unable to update profile! Either email or username has been used.";
             return response()->json(["error" => $error], 400);
+        }
+
+        try{
+            $message = $user->email . " has updated profile";
+            Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+        }
+        catch(\Throwable $exp){
         }
 
         $success['status'] = "success";
@@ -435,6 +469,13 @@ class DashboardController extends Controller
                 $refer = Referral::create($value);
                 array_push($arr, $refer);
 
+            }
+
+            try{
+                $message = $user->email . " has referred " . $request->number . " people";
+                Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+            }
+            catch(\Throwable $exp){
             }
 
             $success['status'] = "success";
@@ -519,6 +560,13 @@ class DashboardController extends Controller
                     "user_id" => $user->id,
                     "balance" => (($verify['data']['amount']/100000) * 200)
                 ]);
+            }
+
+            try{
+                $message = $user->email . " has verified payment";
+                Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+            }
+            catch(\Throwable $exp){
             }
 
             $success['status'] = "success";
