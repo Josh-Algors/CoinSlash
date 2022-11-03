@@ -27,6 +27,10 @@ use Modules\User\Http\Controllers\UserController;
 class DashboardController extends Controller
 {
 
+    /***
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function profile(Request $request){
 
         $user = Auth::user();
@@ -579,4 +583,42 @@ class DashboardController extends Controller
         $error['message'] = "Unable to verify payment";
         return response()->json(["error" => $error], 400);
     }
+
+    public function viewSingleReferral($id){
+        $user = Auth::user();
+
+        $findUser = User::find($user->id);
+
+        // dd($findUser);
+
+        if(!$findUser){
+            $error['status'] = false;
+            $error['message'] = "User not found!";
+            return response()->json($error, 404);
+        }
+
+        $referral = Referral::find($id);
+
+        if(!$referral){
+            $error['status'] = "error";
+            $error['message'] = "Referral not found!";
+            return response()->json(["error" => $error], 400);
+        }
+
+        $success['status'] = "success";
+        $success['message'] = "Referral found";
+        $success['data'] = $referral;
+        return response()->json(["success" => $success], 200);
+    }
+
+    public function viewSingle($id)
+    {
+        $validator = Validator::make($request->all(),[
+            'email' => 'required|email'
+        ])
+
+        
+    }
 }
+
+

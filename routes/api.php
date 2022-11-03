@@ -49,6 +49,10 @@ Route::controller(DashboardController::class)
             Route::post('/verify', 'verifyPayment');
         });
 
+        //viewSingleReferral
+        Route::group(['prefix' => 'referrals'], function(){
+            Route::get('/{id}', 'viewSingleReferral');
+        });
 
 });
 
