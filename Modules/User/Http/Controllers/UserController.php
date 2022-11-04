@@ -621,7 +621,7 @@ class UserController extends Controller
             return response()->json(["error" => $error], 400);
         }
 
-        $paymentlog = \DB::table('payment_logs')->where("data", "like", "%$request->referenceId%")->first();
+        $paymentlog = \DB::table('payment_logs')->where("data", "like", "%$data->reference%")->first();
 
         if($paymentlog)
         {
