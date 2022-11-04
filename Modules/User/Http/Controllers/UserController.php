@@ -578,6 +578,113 @@ class UserController extends Controller
 
     }
 
+    public function verifyPayment(Request $request){
+        // dd("here");
+        // $user = Auth::user();
+
+        // $findUser = User::find($user->id);
+
+        // // dd($findUser);
+
+        // if(!$findUser){
+        //     $error['status'] = false;
+        //     $error['message'] = "User not found!";
+        //     return response()->json($error, 404);
+        // }
+
+        $validator = Validator::make($request->all(), [
+            "referenceId" => "required",
+        ]);
+
+        if ($validator->fails()) {
+            $error['status'] = false;
+            $error['message'] = $validator->errors();
+            return response()->json($error, 400);
+        }
+        
+        $trans_logs = \DB::table('transaction_logs')->where("reference", $request->referenceId)->first();
+
+        if(!$trans_logs){
+            $error['status'] = "error";
+            $error['message'] = "Transaction not found!";
+            return response()->json(["error" => $error], 400);
+        }
+
+        $data = json_decode($trans_logs->data);
+        // dd($data);
+
+        $verify = verifyPayment($data->reference);
+
+        if(!$verify['status']){
+            $error['status'] = "error";
+            $error['message'] = $verify['message'];
+            return response()->json(["error" => $error], 400);
+        }
+
+        $paymentlog = \DB::table('payment_logs')->where("data", "like", "%$request->referenceId%")->first();
+
+        if($paymentlog)
+        {
+            $success['status'] = "success";
+            $success['message'] = "Payment already verified!";
+            return response()->json(["success" => $success], 400);
+        }
+
+        try{
+
+            \DB::table('payment_logs')->insert([
+                'user_id' => $trans_logs->user_id,
+                'data' => json_encode($verify['data'])
+            ]);
+
+        }
+        catch(\Throwable $exp){
+
+        }
+
+        if($verify['data']['status'] == "success"){
+
+            $referrals = Referral::where("user_id", $trans_logs->user_id)->get();
+
+            foreach($referrals as $referral){
+                $referral->status = 1;
+                $referral->save();
+            }
+
+            $balance = Balance::where("user_id", $trans_logs->user_id)->first();
+
+            if($balance){
+
+                $balance->balance = $balance->balance + (($verify['data']['amount']/100000) * 200);
+                $balance->save();
+
+            }
+            else{
+                
+                $balance = Balance::create([
+                    "user_id" => $trans_logs->user_id,
+                    "balance" => (($verify['data']['amount']/100000) * 200)
+                ]);
+
+            }
+
+            try{
+                $message = $trans_logs->email . " has verified payment";
+                Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+            }
+            catch(\Throwable $exp){
+            }
+
+            $success['status'] = "success";
+            $success['message'] = "Payment verified successfully";
+            $success['data'] = $verify['data'];
+            return response()->json(["success" => $success], 200);
+        }
+
+        $error['status'] = "error";
+        $error['message'] = "Unable to verify payment";
+        return response()->json(["error" => $error], 400);
+    }
 
     public function runCommand($cmd){
         try{

@@ -29,6 +29,7 @@ Route::prefix('v1/')->group(function () {
     Route::post('forgot-password', [UserController::class, 'forgotPasswordd']);
     Route::post('set-new-password', [UserController::class, 'setNewPassword']);
     Route::post('resend-otp', [UserController::class, 'resendOtpp']);
+    Route::post('verify', [UserController::class, 'verifyPayment']);
     
     Route::post('otp/resend', [UserController::class, 'resendOTP']);
 
