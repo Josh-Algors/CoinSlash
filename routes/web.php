@@ -22,3 +22,4 @@ Route::get('/', function () {
 
 
 Route::controller('api/v1/auth/user/refer/verify', 'verifyPayment');
+Route::controller('api/v1/auth/user/refer/account', 'getAccount');

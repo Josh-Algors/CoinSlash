@@ -110,33 +110,35 @@ class DashboardController extends Controller
 
     public function getAccount(Request $request)
     {
-        $user = Auth::user();
+        // $user = Auth::user();
 
-        $findUser = User::find($user->id);
+        // $findUser = User::find($user->id);
 
-        // dd($findUser);
+        // // dd($findUser);
 
-        if(!$findUser){
-            $error['status'] = false;
-            $error['message'] = "User not found!";
-            return response()->json($error, 404);
-        }
+        // if(!$findUser){
+        //     $error['status'] = false;
+        //     $error['message'] = "User not found!";
+        //     return response()->json($error, 404);
+        // }
 
 
-        $validator = Validator::make($request->all(), [
-            'account_number' => 'required',
-            'bank_code' => 'required',
-        ]);
+        // $validator = Validator::make($request->all(), [
+        //     'account_number' => 'required',
+        //     'bank_code' => 'required',
+        // ]);
 
-        if ($validator->fails()) {
-            $error['status'] = false;
-            $error['message'] = $validator->errors();
-            return response()->json($error, 400);
-        }
+        // if ($validator->fails()) {
+        //     $error['status'] = false;
+        //     $error['message'] = $validator->errors();
+        //     return response()->json($error, 400);
+        // }
 
         $account_number = $request->account_number;
         $bank_code = $request->bank_code;
         $response = bankVerify($account_number, $bank_code);
+
+        dd($response);
 
         if(count($response) > 0){
             $success['status'] = "success";

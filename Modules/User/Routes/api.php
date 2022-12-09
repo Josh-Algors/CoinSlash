@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SsoController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Http\Request;
 use Modules\User\Http\Controllers\PermissionController;
 // use Illuminate\Routing\Route;
@@ -30,6 +31,7 @@ Route::prefix('v1/')->group(function () {
     Route::post('set-new-password', [UserController::class, 'setNewPassword']);
     Route::post('resend-otp', [UserController::class, 'resendOtpp']);
     Route::post('verify', [UserController::class, 'verifyPayment']);
+    Route::get('/account', [DashboardController::class, 'getAccount']);
     
     Route::post('otp/resend', [UserController::class, 'resendOTP']);
 
