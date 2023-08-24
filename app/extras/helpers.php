@@ -41,7 +41,7 @@ function str_rand($length, $characters = '0123456789abcdefghijklmnopqrstuvwxyzAB
     // dd($accountnumber, $bankcode);
     $curl = curl_init();
         curl_setopt_array($curl, array(
-            CURLOPT_URL => "http://nubapi.test/api/verify",
+            CURLOPT_URL => "http://nubapi.com/api/verify",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_POSTFIELDS => json_encode([
