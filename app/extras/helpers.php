@@ -49,7 +49,7 @@ function str_rand($length, $characters = '0123456789abcdefghijklmnopqrstuvwxyzAB
                 "bank_code" => $bankcode
             ]),
             CURLOPT_HTTPHEADER => [
-              'Authorization: ' . env('MAY_KEY'),
+              'Authorization: Bearer ZYrZxaN7zkyKSk20woPvxuPQj4KtVlJqZR8w3rcg',
               "content-type: application/json"
             ]
           ));
