@@ -138,8 +138,6 @@ class DashboardController extends Controller
         $bank_code = $request->bank_code;
         $response = bankVerify($account_number, $bank_code);
 
-        dd($response);
-
         if(count($response) > 0){
             $success['status'] = "success";
             $success['message'] = "Account details fetched successfully";
