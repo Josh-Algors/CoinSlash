@@ -41,7 +41,7 @@ function str_rand($length, $characters = '0123456789abcdefghijklmnopqrstuvwxyzAB
     // dd($accountnumber, $bankcode);
     $curl = curl_init();
         curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://maylancer.org/api/nuban/api.php?account_number=".$accountnumber."&bank_code=".$bankcode,
+            CURLOPT_URL => "http://nubapi.test/api/verify",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_POSTFIELDS => json_encode([
@@ -49,6 +49,7 @@ function str_rand($length, $characters = '0123456789abcdefghijklmnopqrstuvwxyzAB
                 "bank_code" => $bankcode
             ]),
             CURLOPT_HTTPHEADER => [
+              'Authorization: Bearer ' . env('MAY_KEY'),
               "content-type: application/json"
             ]
           ));
@@ -62,8 +63,6 @@ function str_rand($length, $characters = '0123456789abcdefghijklmnopqrstuvwxyzAB
           }
 
           $tranx = json_decode($response, true);
-
-        //   print_r($tranx['detail']);
 
           return $tranx;
 }
