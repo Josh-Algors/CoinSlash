@@ -440,6 +440,7 @@ class UserController extends Controller
     }
 
     public function login(Request $request){
+        // dd("heere");
         $validator = Validator::make($request->all(), [
             'email' => 'required',
             'password' => 'required',
@@ -452,6 +453,7 @@ class UserController extends Controller
         $email = $request->email;
 
         $userMail = User::where('email', $email)->first();
+        // dd($userMail);
         $userName = User::where('name', $email)->first();
 
         if(!$userMail && !$userName){
