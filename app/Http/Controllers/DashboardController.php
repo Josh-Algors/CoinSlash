@@ -467,8 +467,6 @@ class DashboardController extends Controller
         $amount = 1000 * $request->number * $naira;
         $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
 
-        dd($transfer);
-
         if($transfer['status']){
             
             $ref = str_rand(8);
