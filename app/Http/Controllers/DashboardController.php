@@ -431,7 +431,6 @@ class DashboardController extends Controller
 
     public function referAndEarn(Request $request)
     {
-        dd("herer");
         $user = Auth::user();
 
         $findUser = User::find($user->id);
@@ -467,6 +466,8 @@ class DashboardController extends Controller
         $naira = 100;
         $amount = 1000 * $request->number * $naira;
         $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
+
+        dd($transfer);
 
         if($transfer['status']){
             
