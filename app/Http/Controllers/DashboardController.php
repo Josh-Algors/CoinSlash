@@ -236,7 +236,7 @@ class DashboardController extends Controller
         catch(\Throwable $exp){
 
         }
-        
+
         try{
 
             \DB::table("sub_accounts")->insert([
@@ -260,7 +260,7 @@ class DashboardController extends Controller
             Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
         }
         catch(\Throwable $exp){
-            return response()->json($exp->getMessage(), 400);
+            // return response()->json($exp->getMessage(), 400);
         }
 
         $success['status'] = "success";

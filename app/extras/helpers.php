@@ -82,7 +82,7 @@ function createSubAccount(string $accountnumber, string $bankcode)
                 "percentage_charge" => 80, 
             ]),
             CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer sk_live_e3490d42f30765f4f76d39a7a653c773d5f3b257",
+            "Authorization: Bearer sk_test_261b476a34373366572bbd0a3bd2951f84689140",
             "content-type: application/json"
             ]
           ));
