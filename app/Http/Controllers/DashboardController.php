@@ -431,6 +431,7 @@ class DashboardController extends Controller
 
     public function referAndEarn(Request $request)
     {
+        dd("herer");
         $user = Auth::user();
 
         $findUser = User::find($user->id);
