@@ -138,12 +138,28 @@ class DashboardController extends Controller
         $bank_code = $request->bank_code;
         $response = bankVerify($account_number, $bank_code);
 
-        if(count($response) > 0){
-            $success['status'] = "success";
-            $success['message'] = "Account details fetched successfully";
-            $success['data'] = $response["account_name"];
+        if(!$response["status"])
+        {
+            $error['status'] = "error";
+            $error['message'] = "Unable to fetch account details";
+            return response()->json(["error" => $error], 400);
+        }
 
-            return response()->json(["success" => $success], 200);
+        if(count($response) > 0){
+            try
+            {
+                $success['status'] = "success";
+                $success['message'] = "Account details fetched successfully";
+                $success['data'] = $response["account_name"];
+
+                return response()->json(["success" => $success], 200);
+            }
+            catch(e)
+            {
+                $error['status'] = "error";
+                $error['message'] = "Unable to fetch account details";
+                return response()->json(["error" => $error], 400);
+            }
         }
 
         $error['status'] = "error";
