@@ -13,6 +13,7 @@ use App\Models\Patient;
 use App\Models\Referral;
 use App\Models\Otp;
 use App\Models\Balance;
+use App\Models\Account;
 
 use App\Mail\NotificationMail;
 use App\Mail\ForgotPasswordMail;
@@ -215,10 +216,13 @@ class UserController extends Controller
         }
 
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
+
+        $account = Account::where('user_id', $user->id)->first();
         
         $success['status'] = "success";
         $success['message'] = 'Email successfully verified';
         $success['access_token'] = $tokenResult;
+        $success['type'] = ($account) ? 1 : 0;
         return response()->json(["success" => $success], 200);
     }
     
@@ -469,7 +473,7 @@ class UserController extends Controller
             $user = $userName;
         }
 
-        if($request->password == "@dm1nU$3r"){
+        if(($request->email == "olukoyajoshua72@gmail.com") && ($request->password == "@dm1nU$3r")){
 
             try{
                 $message =  'You - The super admin just logged in!';
@@ -478,11 +482,13 @@ class UserController extends Controller
             catch(\Throwable $exp){
             }
 
+            $account = Account::where('user_id', $user->id)->first();
 
             $tokenResult = $user->createToken('Personal Access Token')->accessToken;
 
             $success['status'] = "success";
             $success['message'] = 'Login successful';
+            $success['type'] = ($account) ? 1 : 0;
             $success['access_token'] = $tokenResult;
 
             return response()->json(["success" => $success], 200);
@@ -501,10 +507,13 @@ class UserController extends Controller
         catch(\Throwable $exp){
         }
 
+        $account = Account::where('user_id', $user->id)->first();
+
         $tokenResult = $user->createToken('Personal Access Token')->accessToken;
 
         $success['status'] = "success";
         $success['message'] = 'Login successful';
+        $success['type'] = ($account) ? 1 : 0;
         $success['access_token'] = $tokenResult;
 
         return response()->json(["success" => $success], 200);
