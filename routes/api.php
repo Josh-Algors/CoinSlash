@@ -46,6 +46,7 @@ Route::controller(DashboardController::class)
 
         Route::group(['prefix' => 'refer'], function(){
             Route::post('/initialize', 'referAndEarn');
+            Route::post('/initialize/bulk', 'bulkReferAndEarn');
             Route::post('/verify', 'verifyPayment');
         });
 

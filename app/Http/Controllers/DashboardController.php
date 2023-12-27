@@ -514,102 +514,111 @@ class DashboardController extends Controller
     }
 
 
-    public function bulkReferAndEarn(Request $request)
-    {
-        $user = Auth::user();
+    // public function bulkReferAndEarn(Request $request)
+    // {
+    //     $user = Auth::user();
 
-        $findUser = User::find($user->id);
+    //     $findUser = User::find($user->id);
 
-        // dd($findUser);
+    //     // dd($findUser);
 
-        if(!$findUser){
-            $error['status'] = false;
-            $error['message'] = "Unable to complete request!";
-            return response()->json($error, 404);
-        }
+    //     if(!$findUser){
+    //         $error['status'] = false;
+    //         $error['message'] = "Unable to complete request!";
+    //         return response()->json($error, 404);
+    //     }
 
-        $subAccount = \DB::table("sub_accounts")->where("user_id", $user->id)->first();
+    //     // $subAccount = \DB::table("sub_accounts")->where("user_id", $user->id)->first();
 
-        if(!$subAccount){
-            $error['status'] = "error";
-            $error['message'] = "Set up your account first!";
-            return response()->json(["error" => $error], 400);
-        }
+    //     // if(!$subAccount){
+    //     //     $error['status'] = "error";
+    //     //     $error['message'] = "Set up your account first!";
+    //     //     return response()->json(["error" => $error], 400);
+    //     // }
 
-        //value - object of array[name, email, phone, referral_code]
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|mimes:csv,txt',
-        ]);
+    //     //value - object of array[name, email, phone, referral_code]
+    //     $validator = Validator::make($request->all(), [
+    //         'file' => 'required|mimes:csv,txt',
+    //     ]);
 
-        if ($validator->fails()) {
-            $error['status'] = false;
-            $error['message'] = $validator->errors();
-            return response()->json($error, 400);
-        }
+    //     if ($validator->fails()) {
+    //         $error['status'] = false;
+    //         $error['message'] = $validator->errors();
+    //         return response()->json($error, 400);
+    //     }
 
-        try{
-            $getFile = $request->file('file');
-            $file = fopen($getFile, "r");
-        }
-        catch(\Throwable $exp){
-            $error['status'] = 'ERROR';
-            $error['message'] = 'An error occured while uploading file. Please try again!';
-            return response()->json(["error" => $error], 500);
-        }
+    //     try{
+    //         $getFile = $request->file('file');
+    //         $file = fopen($getFile, "r");
+    //     }
+    //     catch(\Throwable $exp){
+    //         $error['status'] = 'ERROR';
+    //         $error['message'] = 'An error occured while uploading file. Please try again!';
+    //         return response()->json(["error" => $error], 500);
+    //     }
 
-        $naira = 100;
-        $amount = 1000 * $request->number * $naira;
-        $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
 
-        if($transfer['status']){
+    //     $arr = array();
+    //     $count = 0;
+    //     $value = 1;
+
+    //     while(! feof($file))
+    //     {
+    //         $row = fgetcsv($file);
+    //         if(!$value)
+    //         {
+    //             $value['user_id'] = $user->id;
+    //             $value['name'] = $row[0] ? $row[0] : "";
+    //             $value['matric_no'] = $row[1] ? $row[1] : "";
+    //             $value['phone'] = $row[2] ? $row[2] : "";
+    //             $value['department'] = $row[3] ? $row[3] : "";
+    //             $value['status'] = 0;
+
+    //             $refer = Referral::create($value);
+    //             array_push($arr, $refer);
+
+    //             $count++;
+    //         }
             
-            $ref = str_rand(8);
-            \DB::table('transaction_logs')->insert([
-                'user_id' => $user->id,
-                'data' => json_encode($transfer['data']),
-                'reference' => $ref
-            ]);
 
-            $arr = array();
+    //     }
 
-            while(! feof($file))
-            {
-                $row = fgetcsv($file);
+    //     $naira = 100;
+    //     $amount = 1000 * $count * $naira;
+    //     $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
 
-                $value['user_id'] = $user->id;
-                $value['name'] = $row[0] ? $row[0] : "";
-                $value['matric_no'] = $row[1] ? $row[1] : "";
-                $value['phone'] = $row[2] ? $row[2] : "";
-                $value['department'] = $row[3] ? $row[3] : "";
-                $value['status'] = 0;
+    //     if($transfer['status']){
+            
+    //         $ref = str_rand(8);
+    //         \DB::table('transaction_logs')->insert([
+    //             'user_id' => $user->id,
+    //             'data' => json_encode($transfer['data']),
+    //             'reference' => $ref
+    //         ]);
 
-                $refer = Referral::create($value);
-                array_push($arr, $refer);
-            }
+    //         try{
+    //             $message = $user->email . " has referred " . $request->number . " people";
+    //             Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
+    //         }
+    //         catch(\Throwable $exp){
+    //         }
 
-            try{
-                $message = $user->email . " has referred " . $request->number . " people";
-                Mail::to("olukoyajoshua72@gmail.com")->send(new Tracker($message));
-            }
-            catch(\Throwable $exp){
-            }
+    //         $success['status'] = "success";
+    //         $success['message'] = "Payment initialized successfully";
+    //         $success['data'] = [
+    //             "transaction_id" => $ref,
+    //             "data" => $transfer['data']
+    //         ];
 
-            $success['status'] = "success";
-            $success['message'] = "Payment initialized successfully";
-            $success['data'] = [
-                "transaction_id" => $ref,
-                "data" => $transfer['data']
-            ];
+    //         return response()->json(["success" => $success], 200);
+    //     }
 
-            return response()->json(["success" => $success], 200);
-        }
+    //     fclose($file);
 
-        fclose($file);
-
-        $error['status'] = "error";
-        $error['message'] = "Unable to initialize payment";
-        return response()->json(["error" => $error], 400);   
-    }
+    //     $error['status'] = "error";
+    //     $error['message'] = "Unable to initialize payment";
+    //     return response()->json(["error" => $error], 400);   
+    // }
 
 
     // public function viewSingleReferral($id){
