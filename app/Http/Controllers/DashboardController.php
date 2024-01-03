@@ -50,7 +50,7 @@ class DashboardController extends Controller
 
         //update patient record
         $data['id'] = $user->id;
-        $data['username'] = $user->name;
+        $data['username'] = ucfirst($user->name);
         $data['email'] = $user->email;
         $data['email_verfied_at'] = $user->email_verfied_at;
         $data['amount_earned'] = $balance->balance ?? "0";
