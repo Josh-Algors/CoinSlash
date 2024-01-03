@@ -82,7 +82,7 @@ function createSubAccount(string $accountnumber, string $bankcode)
                 "percentage_charge" => 80, 
             ]),
             CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer " . env("PAYSTACK_TEST_KEY"),
+            "Authorization: Bearer " . env("PAYSTACK_LIVE_KEY"),
             "content-type: application/json"
             ]
           ));
@@ -116,7 +116,7 @@ function verifyPayment($reference)
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_HTTPHEADER => [
             // "Authorization: Bearer sk_live_e3490d42f30765f4f76d39a7a653c773d5f3b257",
-            "Authorization: Bearer " . env("PAYSTACK_TEST_KEY"),
+            "Authorization: Bearer " . env("PAYSTACK_LIVE_KEY"),
             "content-type: application/json"
             ]
           ));
@@ -150,7 +150,7 @@ function initializePayment($email, $amount, $subaccount)
                 "subaccount" => $subaccount, 
             ]),
             CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer " . env("PAYSTACK_TEST_KEY"),
+            "Authorization: Bearer " . env("PAYSTACK_LIVE_KEY"),
             "content-type: application/json"
             ]
         ));
