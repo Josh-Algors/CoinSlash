@@ -582,6 +582,14 @@ class DashboardController extends Controller
 
         $naira = 100;
         $amount = 1000 * $count * $naira;
+
+        if($amount < 1000)
+        {
+            $error['status'] = "error";
+            $error['message'] = "invalid referrals!!";
+            return response()->json(["error" => $error], 400);  
+        }
+
         $transfer = initializePayment($user->email, $amount, $subAccount->sub_account_code);
 
         if($transfer['status']){
